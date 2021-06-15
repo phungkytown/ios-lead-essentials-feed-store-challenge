@@ -33,11 +33,7 @@ public final class CoreDataFeedStore: FeedStore {
 		context.perform {
 			do {
 				if let cache = try ManagedCache.find(in: context) {
-					completion(.found(
-						feed: cache.feed
-							.compactMap { ($0 as? ManagedFeedImage) }
-							.map { LocalFeedImage(id: $0.id, description: $0.imageDescription, location: $0.location, url: $0.url) },
-						timestamp: cache.timestamp))
+					completion(.found(feed: cache.localFeed, timestamp: cache.timestamp))
 				} else {
 					completion(.empty)
 				}
@@ -104,6 +100,10 @@ class ManagedCache: NSManagedObject {
 	static func delete(in context: NSManagedObjectContext) throws {
 		try find(in: context).map(context.delete).map(context.save)
 	}
+
+	var localFeed: [LocalFeedImage] {
+		return feed.compactMap { ($0 as? ManagedFeedImage)?.local }
+	}
 }
 
 @objc(ManagedFeedImage)
@@ -113,4 +113,8 @@ class ManagedFeedImage: NSManagedObject {
 	@NSManaged var location: String?
 	@NSManaged var url: URL
 	@NSManaged var cache: ManagedCache
+
+	var local: LocalFeedImage {
+		LocalFeedImage(id: id, description: imageDescription, location: location, url: url)
+	}
 }
