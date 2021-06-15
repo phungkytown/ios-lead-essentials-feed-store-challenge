@@ -75,11 +75,7 @@ public final class CoreDataFeedStore: FeedStore {
 		let context = self.context
 		context.perform {
 			do {
-				if let cache = try ManagedCache.find(in: context) {
-					context.delete(cache)
-				}
-
-				try context.save()
+				try ManagedCache.delete(in: context)
 				completion(nil)
 			} catch {
 				context.rollback()
@@ -103,6 +99,10 @@ class ManagedCache: NSManagedObject {
 	static func newUniqueInstance(in context: NSManagedObjectContext) throws -> ManagedCache {
 		try find(in: context).map(context.delete)
 		return ManagedCache(context: context)
+	}
+
+	static func delete(in context: NSManagedObjectContext) throws {
+		try find(in: context).map(context.delete).map(context.save)
 	}
 }
 
